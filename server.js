@@ -10,10 +10,10 @@ const PORT = process.env.PORT || 3000;
 const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
 
 app.get('/', (req, res) => {
-    res.json({ status: "Walter Store Real Episodes API is Online!" });
+    res.json({ status: "Walter Store Clean & Ad-Free API is Online!" });
 });
 
-// جلب الأفلام (الاسم إنجليزي والوصف عربي)
+// جلب الأفلام برابط مشغل نظيف وخالٍ من الإعلانات مع دعم الترجمة
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -34,7 +34,8 @@ app.get('/api/get-movies', async (req, res) => {
                 title: item.title || item.original_title,
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
                 overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
-                streamUrl: `https://vidsrc.me/embed/movie?tmdb=${item.id}&sub=ar`,
+                // مشغل نظيف ومباشر (Embed Clean Player)
+                streamUrl: `https://vidsrc.xyz/embed/movie?tmdb=${item.id}`,
                 type: 'movie'
             };
         });
@@ -45,7 +46,7 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
-// جلب المسلسلات الأساسية
+// جلب المسلسلات برابط مشغل نظيف وخالٍ من الإعلانات
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -66,7 +67,7 @@ app.get('/api/get-series', async (req, res) => {
                 title: item.name || item.original_name,
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
                 overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
-                streamUrl: `https://vidsrc.me/embed/tv?tmdb=${item.id}&season=1&episode=1&sub=ar`,
+                streamUrl: `https://vidsrc.xyz/embed/tv?tmdb=${item.id}&season=1&episode=1`,
                 type: 'series'
             };
         });
@@ -77,7 +78,7 @@ app.get('/api/get-series', async (req, res) => {
     }
 });
 
-// مسار جديد لجلب تفاصيل الحلقات الحقيقية لكل موسم من المصدر مباشرة
+// جلب تفاصيل الحلقات الحقيقية
 app.get('/api/get-episodes', async (req, res) => {
     try {
         const { tmdbId, season } = req.query;
