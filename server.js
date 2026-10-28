@@ -8,7 +8,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 // مفتاح جديد ومستقر
-const MY_KEY = "32d99d123e74284594164b3c757c918e";
+const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
 
 app.get('/', (req, res) => {
     res.json({ status: "API is Working Perfectly!" });
