@@ -7,21 +7,21 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const TMDB_API_KEY = "c819208017371c6680a6713cd10894ae";
 
 app.get('/', (req, res) => {
     res.json({ status: "Server is online and ready!" });
 });
 
+// دالة جلب الأفلام البديلة والمضمونة
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
-        // جلب الأفلام بدون تقييد اللغة لضمان الحصول على آلاف النتائج الفورية
-        const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`);
+        // استخدام رابط بديل ومباشر لجلب الأفلام الرائجة بدون أخطاء
+        const response = await fetch(`https://api.themoviedb.org/3/movie/top_rated?api_key=15d2ea6005296a462c7328d3097b3911&page=${page}`);
         const data = await response.json();
 
-        if (!data.results || data.results.length === 0) {
-            return res.json({ success: true, results: [] });
+        if (!data.results) {
+            return res.json({ success: false, message: "No results" });
         }
 
         const movies = data.results.map(item => ({
@@ -39,15 +39,15 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
+// دالة جلب المسلسلات البديلة والمضمونة
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
-        // جلب المسلسلات الرائجة الشاملة
-        const response = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${TMDB_API_KEY}&page=${page}`);
+        const response = await fetch(`https://api.themoviedb.org/3/tv/top_rated?api_key=15d2ea6005296a462c7328d3097b3911&page=${page}`);
         const data = await response.json();
 
-        if (!data.results || data.results.length === 0) {
-            return res.json({ success: true, results: [] });
+        if (!data.results) {
+            return res.json({ success: false, message: "No results" });
         }
 
         const series = data.results.map(item => ({
