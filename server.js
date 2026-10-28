@@ -10,13 +10,13 @@ const PORT = process.env.PORT || 3000;
 const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
 
 app.get('/', (req, res) => {
-    res.json({ status: "Walter Store Hybrid API is Online!" });
+    res.json({ status: "Walter Store Subbed/Dubbed API is Online!" });
 });
 
+// جلب الأفلام مع روابط مشغل تدعم الترجمة العربية
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
-        // جلب الأساس بالإنجليزية (للاسماء) والوصف بالعربية عبر الترجمة المتاحة
         const [resEn, resAr] = await Promise.all([
             fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${MY_KEY}&page=${page}`),
             fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${MY_KEY}&language=ar-SA&page=${page}`)
@@ -31,10 +31,11 @@ app.get('/api/get-movies', async (req, res) => {
             const arItem = dataAr.results && dataAr.results[index] ? dataAr.results[index] : {};
             return {
                 tmdbId: item.id,
-                title: item.title || item.original_title, // الاسم إنجليزي
+                title: arItem.title || item.title || item.original_title, // الاسم مدعوم بالعربية إن توفر أو الإنجليزية
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
-                overview: arItem.overview || item.overview || "No overview available.", // الوصف عربي
-                streamUrl: `https://vidsrc.me/embed/movie?tmdb=${item.id}`,
+                overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
+                // استخدام مشغل يدعم خيارات الترجمة وتغيير اللغة داخل السيرفر
+                streamUrl: `https://vidsrc.me/embed/movie?tmdb=${item.id}&sub=ar`,
                 type: 'movie'
             };
         });
@@ -45,6 +46,7 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
+// جلب المسلسلات مع روابط مشغل تدعم الترجمة العربية للمواسم والحلقات
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -62,10 +64,11 @@ app.get('/api/get-series', async (req, res) => {
             const arItem = dataAr.results && dataAr.results[index] ? dataAr.results[index] : {};
             return {
                 tmdbId: item.id,
-                title: item.name || item.original_name, // الاسم إنجليزي
+                title: arItem.name || item.name || item.original_name,
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
-                overview: arItem.overview || item.overview || "No overview available.", // الوصف عربي
-                streamUrl: `https://vidsrc.me/embed/tv?tmdb=${item.id}&season=1&episode=1`,
+                overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
+                // مشغل المسلسلات مع تفعيل خيار الترجمة العربية التلقائية
+                streamUrl: `https://vidsrc.me/embed/tv?tmdb=${item.id}&season=1&episode=1&sub=ar`,
                 type: 'series'
             };
         });
