@@ -10,10 +10,10 @@ const PORT = process.env.PORT || 3000;
 const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
 
 app.get('/', (req, res) => {
-    res.json({ status: "Walter Store Subbed/Dubbed API is Online!" });
+    res.json({ status: "Walter Store Real Episodes API is Online!" });
 });
 
-// جلب الأفلام مع روابط مشغل تدعم الترجمة العربية
+// جلب الأفلام (الاسم إنجليزي والوصف عربي)
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -31,10 +31,9 @@ app.get('/api/get-movies', async (req, res) => {
             const arItem = dataAr.results && dataAr.results[index] ? dataAr.results[index] : {};
             return {
                 tmdbId: item.id,
-                title: arItem.title || item.title || item.original_title, // الاسم مدعوم بالعربية إن توفر أو الإنجليزية
+                title: item.title || item.original_title,
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
                 overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
-                // استخدام مشغل يدعم خيارات الترجمة وتغيير اللغة داخل السيرفر
                 streamUrl: `https://vidsrc.me/embed/movie?tmdb=${item.id}&sub=ar`,
                 type: 'movie'
             };
@@ -46,7 +45,7 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
-// جلب المسلسلات مع روابط مشغل تدعم الترجمة العربية للمواسم والحلقات
+// جلب المسلسلات الأساسية
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -64,10 +63,9 @@ app.get('/api/get-series', async (req, res) => {
             const arItem = dataAr.results && dataAr.results[index] ? dataAr.results[index] : {};
             return {
                 tmdbId: item.id,
-                title: arItem.name || item.name || item.original_name,
+                title: item.name || item.original_name,
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
                 overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
-                // مشغل المسلسلات مع تفعيل خيار الترجمة العربية التلقائية
                 streamUrl: `https://vidsrc.me/embed/tv?tmdb=${item.id}&season=1&episode=1&sub=ar`,
                 type: 'series'
             };
@@ -76,6 +74,30 @@ app.get('/api/get-series', async (req, res) => {
         res.json({ success: true, results: series });
     } catch (error) {
         res.status(500).json({ success: error.message });
+    }
+});
+
+// مسار جديد لجلب تفاصيل الحلقات الحقيقية لكل موسم من المصدر مباشرة
+app.get('/api/get-episodes', async (req, res) => {
+    try {
+        const { tmdbId, season } = req.query;
+        const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${season}?api_key=${MY_KEY}&language=ar-SA`);
+        const data = await response.json();
+
+        if (!data.episodes) {
+            return res.json({ success: false, episodes: [] });
+        }
+
+        const episodes = data.episodes.map(ep => ({
+            episodeNumber: ep.episode_number,
+            name: ep.name || `الحلقة ${ep.episode_number}`,
+            overview: ep.overview || "لا يتوفر وصف دقيق لهذه الحلقة حالياً.",
+            stillPath: ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : null
+        }));
+
+        res.json({ success: true, episodes: episodes });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
