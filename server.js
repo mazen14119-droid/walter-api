@@ -7,23 +7,35 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-// ضع مفتاحك الجديد هنا بين القوسين
-const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
+const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf"; // مفتاحك الخاص الشغال
 
 app.get('/', (req, res) => {
-    res.json({ status: "API is Working Perfectly!" });
+    res.json({ status: "Walter Store Ultimate API is Online!" });
 });
 
+// دالة لجلب أرشيف ضخم وشامل للأفلام (الرائجة + الأعلى تقييماً + الجديدة)
 app.get('/api/get-movies', async (req, res) => {
     try {
-        const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${MY_KEY}&language=ar-SA&page=1`);
-        const data = await response.json();
+        const page = req.query.page || 1;
+        
+        // نسحب من عدة قوائم في وقت واحد لنضمن الامتلاء (Popular + Top Rated)
+        const [res1, res2] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${MY_KEY}&page=${page}`),
+            fetch(`https://api.themoviedb.org/3/movie/top_rated?api_key=${MY_KEY}&page=${page}`)
+        ]);
 
-        if (!data.results) {
+        const data1 = await res1.json();
+        const data2 = await res2.json();
+
+        // دمج النتائج بدون تكرار
+        const combined = [...(data1.results || []), ...(data2.results || [])];
+        const uniqueMovies = Array.from(new Map(combined.map(item => [item.id, item])).values());
+
+        if (uniqueMovies.length === 0) {
             return res.json({ success: false, results: [] });
         }
 
-        const movies = data.results.map(item => ({
+        const movies = uniqueMovies.map(item => ({
             tmdbId: item.id,
             title: item.title || item.original_title,
             poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
@@ -38,16 +50,27 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
+// دالة لجلب أرشيف ضخم وشامل للمسلسلات
 app.get('/api/get-series', async (req, res) => {
     try {
-        const response = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${MY_KEY}&language=ar-SA&page=1`);
-        const data = await response.json();
+        const page = req.query.page || 1;
 
-        if (!data.results) {
+        const [res1, res2] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${MY_KEY}&page=${page}`),
+            fetch(`https://api.themoviedb.org/3/tv/top_rated?api_key=${MY_KEY}&page=${page}`)
+        ]);
+
+        const data1 = await res1.json();
+        const data2 = await res2.json();
+
+        const combined = [...(data1.results || []), ...(data2.results || [])];
+        const uniqueSeries = Array.from(new Map(combined.map(item => [item.id, item])).values());
+
+        if (uniqueSeries.length === 0) {
             return res.json({ success: false, results: [] });
         }
 
-        const series = data.results.map(item => ({
+        const series = uniqueSeries.map(item => ({
             tmdbId: item.id,
             title: item.name || item.original_name,
             poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
