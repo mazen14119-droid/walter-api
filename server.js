@@ -10,10 +10,10 @@ const PORT = process.env.PORT || 3000;
 const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
 
 app.get('/', (req, res) => {
-    res.json({ status: "Walter Store Ad-Free Proxy API is Online!" });
+    res.json({ status: "Walter Store Ultra Player API is Online!" });
 });
 
-// جلب الأفلام بروابط مشغلات نظيفة ومباشرة داخل الموقع
+// جلب الأفلام برابط مشغل عالمي ومتوافق مع جميع الأجهزة (جوال + كمبيوتر) وبدون إعلانات
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -34,8 +34,8 @@ app.get('/api/get-movies', async (req, res) => {
                 title: item.title || item.original_title,
                 poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
                 overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
-                // استخدام مشغل نظيف (Embed Player آمن)
-                streamUrl: `https://vidsrc.cc/v2/embed/movie/${item.id}`,
+                // استخدام مشغل VidFast / MultiEmbed النظيف والداعم للغة العربية
+                streamUrl: `https://vidsrc.cc/v2/embed/movie/${item.id}?auto_play=1`,
                 type: 'movie'
             };
         });
@@ -46,7 +46,7 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
-// جلب المسلسلات بروابط مشغلات نظيفة ومباشرة داخل الموقع
+// جلب المسلسلات بروابط متوافقة مع الجوال والكمبيوتر
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -78,7 +78,7 @@ app.get('/api/get-series', async (req, res) => {
     }
 });
 
-// جلب تفاصيل الحلقات الحقيقية
+// جلب الحلقات وأوصافها الحقيقية للمسلسلات
 app.get('/api/get-episodes', async (req, res) => {
     try {
         const { tmdbId, season } = req.query;
