@@ -7,7 +7,6 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-// مفتاح بديل ومستقر لجلب البيانات بدون توقف
 const TMDB_API_KEY = "c819208017371c6680a6713cd10894ae";
 
 app.get('/', (req, res) => {
@@ -17,18 +16,19 @@ app.get('/', (req, res) => {
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
-        const response = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=ar-SA&sort_by=popularity.desc&page=${page}`);
+        // جلب الأفلام بدون تقييد اللغة لضمان الحصول على آلاف النتائج الفورية
+        const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`);
         const data = await response.json();
 
         if (!data.results || data.results.length === 0) {
-            return res.json({ success: false, message: "No results found" });
+            return res.json({ success: true, results: [] });
         }
 
         const movies = data.results.map(item => ({
             tmdbId: item.id,
             title: item.title || item.original_title,
             poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
-            overview: item.overview || "لا يوجد وصف متوفر.",
+            overview: item.overview || "No overview available.",
             streamUrl: `https://vidsrc.me/embed/movie?tmdb=${item.id}`,
             type: 'movie'
         }));
@@ -42,18 +42,19 @@ app.get('/api/get-movies', async (req, res) => {
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
-        const response = await fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=ar-SA&sort_by=popularity.desc&page=${page}`);
+        // جلب المسلسلات الرائجة الشاملة
+        const response = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${TMDB_API_KEY}&page=${page}`);
         const data = await response.json();
 
         if (!data.results || data.results.length === 0) {
-            return res.json({ success: false, message: "No results found" });
+            return res.json({ success: true, results: [] });
         }
 
         const series = data.results.map(item => ({
             tmdbId: item.id,
             title: item.name || item.original_name,
             poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
-            overview: item.overview || "لا يوجد وصف متوفر.",
+            overview: item.overview || "No overview available.",
             streamUrl: `https://vidsrc.me/embed/tv?tmdb=${item.id}&season=1&episode=1`,
             type: 'series'
         }));
