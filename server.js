@@ -7,11 +7,11 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const TMDB_API_KEY = "15d2ea6005296a462c7328d3097b3911";
+// مفتاح بديل ومستقر لجلب البيانات بدون توقف
+const TMDB_API_KEY = "c819208017371c6680a6713cd10894ae";
 
-// مسار رئيسي للتأكد أن السيرفر يعمل
 app.get('/', (req, res) => {
-    res.json({ status: "Server is alive and ready!" });
+    res.json({ status: "Server is online and ready!" });
 });
 
 app.get('/api/get-movies', async (req, res) => {
@@ -21,7 +21,7 @@ app.get('/api/get-movies', async (req, res) => {
         const data = await response.json();
 
         if (!data.results || data.results.length === 0) {
-            return res.json({ success: true, results: [] });
+            return res.json({ success: false, message: "No results found" });
         }
 
         const movies = data.results.map(item => ({
@@ -46,7 +46,7 @@ app.get('/api/get-series', async (req, res) => {
         const data = await response.json();
 
         if (!data.results || data.results.length === 0) {
-            return res.json({ success: true, results: [] });
+            return res.json({ success: false, message: "No results found" });
         }
 
         const series = data.results.map(item => ({
