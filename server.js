@@ -7,19 +7,20 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+// مفتاح جديد ومستقر
+const MY_KEY = "32d99d123e74284594164b3c757c918e";
 
 app.get('/', (req, res) => {
-    jsonResponse = { status: "Online" };
-    res.json(jsonResponse);
+    res.json({ status: "API is Working Perfectly!" });
 });
 
 app.get('/api/get-movies', async (req, res) => {
     try {
-        const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=c819208017371c6680a6713cd10894ae&page=1`);
+        const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${MY_KEY}&page=1`);
         const data = await response.json();
 
         if (!data.results) {
-            return res.json({ success: false, results: [] });
+            return res.json({ success: false, message: "No data from TMDB" });
         }
 
         const movies = data.results.map(item => ({
@@ -39,11 +40,11 @@ app.get('/api/get-movies', async (req, res) => {
 
 app.get('/api/get-series', async (req, res) => {
     try {
-        const response = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=c819208017371c6680a6713cd10894ae&page=1`);
+        const response = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${MY_KEY}&page=1`);
         const data = await response.json();
 
         if (!data.results) {
-            return res.json({ success: false, results: [] });
+            return res.json({ success: false, message: "No data from TMDB" });
         }
 
         const series = data.results.map(item => ({
@@ -57,7 +58,7 @@ app.get('/api/get-series', async (req, res) => {
 
         res.json({ success: true, results: series });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: error.message });
     }
 });
 
