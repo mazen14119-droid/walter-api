@@ -10,16 +10,15 @@ const PORT = process.env.PORT || 3000;
 const MY_KEY = "1ca9345a8971570eb48c1df1e5bb70bf";
 
 app.get('/', (req, res) => {
-    res.json({ status: "Walter Store Smart Search & Multi-Server API is Online!" });
+    res.json({ status: "Walter Store Server is Online!" });
 });
 
-// 1. مسار البحث التلقائي الجالب للبوستر والوصف العربي (لتسهيل إضافة المدبلج والخاص)
+// مسار البحث التلقائي الجالب للبوستر والوصف العربي
 app.get('/api/search-tmdb', async (req, res) => {
     try {
         const query = req.query.q;
         if (!query) return res.json({ success: false, results: [] });
 
-        // البحث باللغتين لضمان جلب الوصف العربي مع الاسم الأصلي والبوستر
         const [resAr, resEn] = await Promise.all([
             fetch(`https://api.themoviedb.org/3/search/multi?api_key=${MY_KEY}&language=ar-SA&query=${encodeURIComponent(query)}`),
             fetch(`https://api.themoviedb.org/3/search/multi?api_key=${MY_KEY}&language=en-US&query=${encodeURIComponent(query)}`)
@@ -55,7 +54,7 @@ app.get('/api/search-tmdb', async (req, res) => {
     }
 });
 
-// 2. جلب الأفلام العامة
+// جلب الأفلام العامة
 app.get('/api/get-movies', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -87,7 +86,7 @@ app.get('/api/get-movies', async (req, res) => {
     }
 });
 
-// 3. جلب المسلسلات العامة
+// جلب المسلسلات العامة
 app.get('/api/get-series', async (req, res) => {
     try {
         const page = req.query.page || 1;
@@ -101,4 +100,48 @@ app.get('/api/get-series', async (req, res) => {
 
         if (!dataEn.results) return res.json({ success: false, results: [] });
 
-        const series = dataEn.results.map((item, index
+        const series = dataEn.results.map((item, index) => {
+            const arItem = dataAr.results && dataAr.results[index] ? dataAr.results[index] : {};
+            return {
+                tmdbId: item.id,
+                title: item.name || item.original_name,
+                poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 'https://via.placeholder.com/500x750',
+                overview: arItem.overview || item.overview || "لا يوجد وصف متوفر.",
+                streamUrl: `https://multiembed.mov/?video_id=${item.id}&tmdb=1&s=1&e=1`,
+                type: 'series'
+            };
+        });
+
+        res.json({ success: true, results: series });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// جلب الحلقات للمسلسلات
+app.get('/api/get-episodes', async (req, res) => {
+    try {
+        const { tmdbId, season } = req.query;
+        const response = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${season}?api_key=${MY_KEY}&language=ar-SA`);
+        const data = await response.json();
+
+        if (!data.episodes) {
+            return res.json({ success: false, episodes: [] });
+        }
+
+        const episodes = data.episodes.map(ep => ({
+            episodeNumber: ep.episode_number,
+            name: ep.name || `الحلقة ${ep.episode_number}`,
+            overview: ep.overview || "لا يتوفر وصف دقيق لهذه الحلقة حالياً.",
+            stillPath: ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : null
+        }));
+
+        res.json({ success: true, episodes: episodes });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
